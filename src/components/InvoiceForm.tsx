@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Invoice, InvoiceItem, TemplateTheme, BusinessProfile } from '../types';
-import { Plus, Trash2, Calculator, Sparkles, AlertTriangle } from 'lucide-react';
-import { formatCurrency } from '../utils/exportUtils';
+import { Plus, Trash2, Calculator } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface InvoiceFormProps {
   initialInvoice?: Invoice | null;
@@ -16,6 +16,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   onSave,
   onCancel,
 }) => {
+  const { t, formatAmount } = useLanguage();
   const generateNewId = () => 'inv-' + Math.random().toString(36).substring(2, 9);
   const generateInvoiceNum = () => `INV-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
 
@@ -30,7 +31,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const [clientCityStateZip, setClientCityStateZip] = useState(initialInvoice?.clientCityStateZip || '');
   const [issueDate, setIssueDate] = useState(initialInvoice?.issueDate || todayStr);
   const [dueDate, setDueDate] = useState(initialInvoice?.dueDate || defaultDue);
-  const [currency, setCurrency] = useState(initialInvoice?.currency || 'USD');
+  const [currency, setCurrency] = useState(initialInvoice?.currency || 'EUR');
   const [status, setStatus] = useState<Invoice['status']>(initialInvoice?.status || 'open');
   const [templateTheme, setTemplateTheme] = useState<TemplateTheme>(initialInvoice?.templateTheme || 'modern');
 
@@ -40,7 +41,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       : [{ id: '1', description: 'Consulting / Professional Services', quantity: 1, unitPrice: 500, subtotal: 500 }]
   );
 
-  const [taxRate, setTaxRate] = useState<number>(initialInvoice ? initialInvoice.taxRate : 8.5);
+  const [taxRate, setTaxRate] = useState<number>(initialInvoice ? initialInvoice.taxRate : 19.0);
 
   // Downpayment configuration
   const [downpaymentRequired, setDownpaymentRequired] = useState<boolean>(
@@ -57,10 +58,10 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   );
 
   const [notes, setNotes] = useState(
-    initialInvoice?.notes || 'Thank you for your business. We appreciate the opportunity to work together.'
+    initialInvoice?.notes || t.formClientNotesPlaceholder
   );
   const [terms, setTerms] = useState(
-    initialInvoice?.terms || profile.paymentTermsNote || 'Payment is due within 14 days of invoice date.'
+    initialInvoice?.terms || profile.paymentTermsNote || t.formPaymentTermsPlaceholder
   );
 
   // Calculate financials dynamically
@@ -115,7 +116,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!clientName.trim()) {
-      alert('Please provide a Client Name.');
+      alert(t.formClientName);
       return;
     }
 
@@ -166,10 +167,10 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
           <h2 className="text-xl font-bold text-slate-900">
-            {initialInvoice ? `Edit Invoice: ${initialInvoice.invoiceNumber}` : 'Create New Invoice'}
+            {initialInvoice ? `${t.formTitleEdit}: ${initialInvoice.invoiceNumber}` : t.formTitleNew}
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Fill in client, line items, automated tax, and optional upfront downpayment terms.
+            {t.formSubtitle}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -178,13 +179,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
             onClick={onCancel}
             className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition"
           >
-            Cancel
+            {t.cancel}
           </button>
           <button
             type="submit"
             className="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition"
           >
-            {initialInvoice ? 'Save Changes' : 'Create & Save Invoice'}
+            {initialInvoice ? t.save : t.formSaveInvoice}
           </button>
         </div>
       </div>
@@ -192,7 +193,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       {/* Invoice Meta Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">Invoice Number</label>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">{t.formInvoiceNumber}</label>
           <input
             type="text"
             value={invoiceNumber}
@@ -203,23 +204,23 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">Currency</label>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">{t.formCurrency}</label>
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
             className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           >
-            <option value="USD">USD ($)</option>
             <option value="EUR">EUR (€)</option>
+            <option value="USD">USD ($)</option>
             <option value="GBP">GBP (£)</option>
+            <option value="CHF">CHF (CHF)</option>
             <option value="CAD">CAD ($)</option>
             <option value="AUD">AUD ($)</option>
-            <option value="AED">AED (د.إ)</option>
           </select>
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">Issue Date</label>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">{t.formIssueDate}</label>
           <input
             type="date"
             value={issueDate}
@@ -230,7 +231,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">Due Date</label>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">{t.formDueDate}</label>
           <input
             type="date"
             value={dueDate}
@@ -244,52 +245,52 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       {/* Client Information */}
       <div className="bg-white p-5 rounded-xl border border-slate-200">
         <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-          <span>Client & Billing Details</span>
+          <span>{t.formClientInfo}</span>
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Client / Company Name *
+              {t.formClientName}
             </label>
             <input
               type="text"
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
-              placeholder="e.g. Acme Corporation"
+              placeholder={t.formClientNamePlaceholder}
               className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Client Email</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">{t.formClientEmail}</label>
             <input
               type="email"
               value={clientEmail}
               onChange={(e) => setClientEmail(e.target.value)}
-              placeholder="accounting@acme.com"
+              placeholder={t.formClientEmailPlaceholder}
               className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Street Address</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">{t.formClientAddress}</label>
             <input
               type="text"
               value={clientAddress}
               onChange={(e) => setClientAddress(e.target.value)}
-              placeholder="123 Market St, Suite 100"
+              placeholder={t.formClientAddressPlaceholder}
               className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">City, State, Zip</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">{t.formClientCityStateZip}</label>
             <input
               type="text"
               value={clientCityStateZip}
               onChange={(e) => setClientCityStateZip(e.target.value)}
-              placeholder="San Francisco, CA 94103"
+              placeholder={t.formClientCityStateZipPlaceholder}
               className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
@@ -299,13 +300,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       {/* Line Items Table */}
       <div className="bg-white p-5 rounded-xl border border-slate-200">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-bold text-slate-900">Line Items & Services</h3>
+          <h3 className="text-sm font-bold text-slate-900">{t.formLineItems}</h3>
           <button
             type="button"
             onClick={addItem}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition"
           >
-            <Plus className="w-3.5 h-3.5" /> Add Line Item
+            <Plus className="w-3.5 h-3.5" /> {t.formAddItem}
           </button>
         </div>
 
@@ -313,10 +314,10 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-xs text-slate-500 uppercase">
-                <th className="pb-2 w-[45%] font-semibold">Description</th>
-                <th className="pb-2 w-[15%] text-center font-semibold">Quantity</th>
-                <th className="pb-2 w-[20%] text-right font-semibold">Unit Price ({currency})</th>
-                <th className="pb-2 w-[15%] text-right font-semibold">Subtotal</th>
+                <th className="pb-2 w-[45%] font-semibold">{t.formColDescription}</th>
+                <th className="pb-2 w-[15%] text-center font-semibold">{t.formColQty}</th>
+                <th className="pb-2 w-[20%] text-right font-semibold">{t.formColPrice} ({currency})</th>
+                <th className="pb-2 w-[15%] text-right font-semibold">{t.formColTotal}</th>
                 <th className="pb-2 w-[5%] text-center font-semibold"></th>
               </tr>
             </thead>
@@ -328,7 +329,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                       type="text"
                       value={item.description}
                       onChange={(e) => handleItemChange(idx, 'description', e.target.value)}
-                      placeholder="Service or product description..."
+                      placeholder={t.formColDescription}
                       className="w-full text-xs px-3 py-2 bg-slate-50 group-hover:bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                       required
                     />
@@ -356,14 +357,14 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     />
                   </td>
                   <td className="py-2.5 pl-2 text-right text-xs font-mono font-bold text-slate-800">
-                    {formatCurrency(item.subtotal, currency)}
+                    {formatAmount(item.subtotal, currency)}
                   </td>
                   <td className="py-2.5 text-center">
                     <button
                       type="button"
                       onClick={() => removeItem(idx)}
                       disabled={items.length <= 1}
-                      title="Delete item"
+                      title={t.delete}
                       className="text-slate-400 hover:text-rose-600 disabled:opacity-30 p-1"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -390,11 +391,11 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   onChange={(e) => setDownpaymentRequired(e.target.checked)}
                   className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
                 />
-                Require Upfront Downpayment / Deposit
+                {t.formRequireDownpayment}
               </label>
               {downpaymentRequired && (
                 <span className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-                  Active
+                  {t.statusDownpayment}
                 </span>
               )}
             </div>
@@ -410,7 +411,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                       onChange={() => setDownpaymentType('percentage')}
                       className="text-indigo-600"
                     />
-                    Percentage of Total (%)
+                    {t.formDownpaymentPercentage}
                   </label>
                   <label className="flex items-center gap-1.5 cursor-pointer">
                     <input
@@ -420,14 +421,14 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                       onChange={() => setDownpaymentType('fixed')}
                       className="text-indigo-600"
                     />
-                    Fixed Dollar Deposit
+                    {t.formDownpaymentFixed}
                   </label>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <div className="w-1/2">
                     <label className="block text-[11px] font-semibold text-slate-500 mb-1">
-                      {downpaymentType === 'percentage' ? 'Deposit Percentage' : 'Deposit Fixed Amount'}
+                      {t.formDownpaymentValue}
                     </label>
                     <div className="relative">
                       <input
@@ -446,9 +447,9 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   </div>
 
                   <div className="w-1/2 p-2 rounded bg-white border border-slate-200 text-xs">
-                    <div className="text-[10px] text-slate-400 uppercase font-semibold">Deposit Due</div>
+                    <div className="text-[10px] text-slate-400 uppercase font-semibold">{t.formCalculatedDeposit}</div>
                     <div className="text-sm font-bold text-indigo-700 font-mono">
-                      {formatCurrency(downpaymentAmount, currency)}
+                      {formatAmount(downpaymentAmount, currency)}
                     </div>
                   </div>
                 </div>
@@ -459,26 +460,26 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           {/* Payment Status & Amount Paid */}
           <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-3">
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-              Payment Status & Tracking
+              {t.formStatus}
             </h4>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Status</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">{t.formStatus}</label>
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value as Invoice['status'])}
                   className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 >
-                  <option value="open">Open / Unpaid</option>
-                  <option value="downpayment">Downpayment Received</option>
-                  <option value="paid">Paid in Full</option>
-                  <option value="draft">Draft</option>
+                  <option value="open">{t.statusOpen}</option>
+                  <option value="downpayment">{t.statusDownpayment}</option>
+                  <option value="paid">{t.statusPaid}</option>
+                  <option value="draft">{t.statusDraft}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Amount Received ({currency})
+                  {t.formAmountPaid} ({currency})
                 </label>
                 <input
                   type="number"
@@ -503,7 +504,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   }}
                   className="text-[11px] px-2.5 py-1 rounded bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition"
                 >
-                  Mark Deposit Paid ({formatCurrency(downpaymentAmount, currency)})
+                  {t.viewModalMarkDownpayment} ({formatAmount(downpaymentAmount, currency)})
                 </button>
               )}
               <button
@@ -514,7 +515,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 }}
                 className="text-[11px] px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition"
               >
-                Mark Paid in Full
+                {t.viewModalMarkPaid}
               </button>
             </div>
           </div>
@@ -522,28 +523,28 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           {/* Template Selection */}
           <div className="bg-white p-5 rounded-xl border border-slate-200">
             <label className="block text-xs font-bold text-slate-900 mb-2 uppercase tracking-wider">
-              Document Visual Template
+              {t.formTheme}
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               {(
                 [
-                  { id: 'modern', label: 'Modern Indigo' },
-                  { id: 'minimalist', label: 'Minimal Clean' },
-                  { id: 'classic', label: 'Classic Warm' },
-                  { id: 'corporate', label: 'Corporate Slate' },
+                  { id: 'modern', label: t.formThemeModern },
+                  { id: 'minimalist', label: t.formThemeMinimalist },
+                  { id: 'classic', label: t.formThemeClassic },
+                  { id: 'corporate', label: t.formThemeCorporate },
                 ] as const
-              ).map((t) => (
+              ).map((tm) => (
                 <button
-                  key={t.id}
+                  key={tm.id}
                   type="button"
-                  onClick={() => setTemplateTheme(t.id)}
+                  onClick={() => setTemplateTheme(tm.id)}
                   className={`py-2 px-3 rounded-lg border text-center font-medium transition ${
-                    templateTheme === t.id
+                    templateTheme === tm.id
                       ? 'border-indigo-600 bg-indigo-50 text-indigo-800 ring-2 ring-indigo-500/20'
                       : 'border-slate-200 text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  {t.label}
+                  {tm.label}
                 </button>
               ))}
             </div>
@@ -554,20 +555,20 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         <div className="space-y-4">
           <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-3">
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center justify-between">
-              <span>Financial Summary & Tax</span>
+              <span>{t.formFinancialSummary}</span>
               <Calculator className="w-4 h-4 text-slate-400" />
             </h4>
 
             <div className="flex items-center justify-between text-xs py-2 border-b border-slate-100 text-slate-600">
-              <span>Line Items Subtotal:</span>
+              <span>{t.formSubtotal}:</span>
               <span className="font-mono font-bold text-slate-900 text-sm">
-                {formatCurrency(subtotalAmount, currency)}
+                {formatAmount(subtotalAmount, currency)}
               </span>
             </div>
 
             <div className="flex items-center justify-between gap-4 py-2 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-600">Tax Rate (%):</span>
+                <span className="text-xs text-slate-600">{t.formTaxRate}:</span>
                 <input
                   type="number"
                   min="0"
@@ -579,33 +580,33 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 />
               </div>
               <span className="font-mono text-xs font-semibold text-slate-800">
-                +{formatCurrency(taxAmount, currency)}
+                +{formatAmount(taxAmount, currency)}
               </span>
             </div>
 
             <div className="flex items-center justify-between text-sm py-2 border-b-2 border-slate-900 font-bold text-slate-950">
-              <span>Grand Total:</span>
-              <span className="font-mono text-base">{formatCurrency(totalAmount, currency)}</span>
+              <span>{t.formTotalAmount}:</span>
+              <span className="font-mono text-base">{formatAmount(totalAmount, currency)}</span>
             </div>
 
             {downpaymentRequired && (
               <div className="flex items-center justify-between text-xs py-1.5 text-indigo-700 font-medium">
-                <span>Required Deposit:</span>
+                <span>{t.formCalculatedDeposit}:</span>
                 <span className="font-mono font-bold">
-                  {formatCurrency(downpaymentAmount, currency)}
+                  {formatAmount(downpaymentAmount, currency)}
                 </span>
               </div>
             )}
 
             <div className="flex items-center justify-between text-xs py-1.5 text-emerald-700 font-medium">
-              <span>Amount Paid:</span>
-              <span className="font-mono font-bold">-{formatCurrency(amountPaid, currency)}</span>
+              <span>{t.formAmountPaid}:</span>
+              <span className="font-mono font-bold">-{formatAmount(amountPaid, currency)}</span>
             </div>
 
             <div className="flex items-center justify-between text-sm py-3 bg-slate-50 px-3 rounded-lg font-black text-slate-950">
-              <span>Remaining Balance Due:</span>
+              <span>{t.formBalanceDue}:</span>
               <span className="font-mono text-lg text-indigo-600">
-                {formatCurrency(balanceDue, currency)}
+                {formatAmount(balanceDue, currency)}
               </span>
             </div>
           </div>
@@ -614,23 +615,25 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Client Notes (appears on invoice)
+                {t.formClientNotes}
               </label>
               <textarea
                 rows={2}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
+                placeholder={t.formClientNotesPlaceholder}
                 className="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Payment Terms & Conditions
+                {t.formPaymentTerms}
               </label>
               <textarea
                 rows={2}
                 value={terms}
                 onChange={(e) => setTerms(e.target.value)}
+                placeholder={t.formPaymentTermsPlaceholder}
                 className="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>

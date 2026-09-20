@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { GoogleDriveUser } from '../types';
 import { Cloud, LogOut, CheckCircle2, ShieldCheck, Key, Loader2 } from 'lucide-react';
 import { googleSignIn, googleSignOut } from '../services/firebaseAuth';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface GoogleAuthModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
   onLoginSuccess,
   onLogout,
 }) => {
+  const { t } = useLanguage();
   const [tokenInput, setTokenInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -105,8 +107,8 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
               <Cloud className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">Google Drive Cloud Storage</h3>
-              <p className="text-xs text-slate-500">Secure automated invoice backup</p>
+              <h3 className="text-base font-bold text-slate-900">{t.driveModalTitle}</h3>
+              <p className="text-xs text-slate-500">{t.driveModalSubtitle}</p>
             </div>
           </div>
           <button
@@ -136,7 +138,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                 <div>
                   <div className="text-xs font-bold text-emerald-900 flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Connected Google Account</span>
+                    <span>{t.driveConnected}</span>
                   </div>
                   <div className="text-sm font-semibold text-slate-900">{driveUser.name}</div>
                   <div className="text-xs text-slate-500">{driveUser.email}</div>
@@ -145,20 +147,20 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
 
               <div className="text-xs text-slate-600 bg-white p-2.5 rounded-lg border border-emerald-100 flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Invoices are synced directly into your private Google Drive &quot;InvoiceFlow Invoices&quot; folder.</span>
+                <span>{t.driveConnectedMsg}</span>
               </div>
 
               <button
                 onClick={handleDisconnect}
                 className="w-full py-2 text-xs font-semibold text-rose-600 bg-white border border-rose-200 rounded-lg hover:bg-rose-50 flex items-center justify-center gap-1.5 transition"
               >
-                <LogOut className="w-3.5 h-3.5" /> Disconnect Account
+                <LogOut className="w-3.5 h-3.5" /> {t.driveDisconnect}
               </button>
             </div>
           ) : (
             <div className="space-y-4">
               <p className="text-xs text-slate-600 leading-relaxed">
-                Connect your Google account to automatically back up generated PDF invoices to your Google Drive. The app only accesses files it creates to store your invoices.
+                {t.driveModalDesc}
               </p>
 
               {error && (
@@ -195,7 +197,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                     />
                   </svg>
                 )}
-                <span>{loading ? 'Signing in with Google...' : 'Sign in with Google'}</span>
+                <span>{loading ? t.driveSigningIn : t.driveSignInBtn}</span>
               </button>
 
               {/* Direct OAuth Token fallback */}
@@ -231,7 +233,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
             onClick={onClose}
             className="px-4 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900"
           >
-            Close
+            {t.cancel}
           </button>
         </div>
       </div>

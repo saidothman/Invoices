@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { Invoice, BusinessProfile, GoogleDriveUser } from '../types';
 import { InvoicePreviewDocument } from './InvoicePreviewDocument';
-import { generateInvoicePdf, formatCurrency } from '../utils/exportUtils';
+import { generateInvoicePdf } from '../utils/exportUtils';
 import { uploadInvoicePdfToDrive } from '../services/googleDriveService';
+import { useLanguage } from '../i18n/LanguageContext';
 import {
   FileDown,
   Cloud,
   ArrowLeft,
   Printer,
   CheckCircle2,
-  Clock,
   AlertCircle,
   ExternalLink,
   Loader2,
+  Edit2,
 } from 'lucide-react';
 
 interface InvoiceViewModalProps {
@@ -36,6 +37,7 @@ export const InvoiceViewModal: React.FC<InvoiceViewModalProps> = ({
   onDriveUploaded,
   onRequestGoogleLogin,
 }) => {
+  const { t, formatDate, formatAmount } = useLanguage();
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isUploadingToDrive, setIsUploadingToDrive] = useState(false);
   const [driveSuccessMsg, setDriveSuccessMsg] = useState<string | null>(null);
@@ -88,7 +90,7 @@ export const InvoiceViewModal: React.FC<InvoiceViewModalProps> = ({
       );
 
       onDriveUploaded(invoice.id, driveResult.id, driveResult.webViewLink);
-      setDriveSuccessMsg('Saved to Google Drive in folder "InvoiceFlow Invoices"!');
+      setDriveSuccessMsg(t.viewModalDriveSuccess);
       setTimeout(() => setDriveSuccessMsg(null), 6000);
     } catch (err: any) {
       console.error('Drive upload failed:', err);
@@ -106,6 +108,7 @@ export const InvoiceViewModal: React.FC<InvoiceViewModalProps> = ({
           <button
             onClick={onClose}
             className="p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition"
+            title={t.viewModalBack}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -118,7 +121,7 @@ export const InvoiceViewModal: React.FC<InvoiceViewModalProps> = ({
               <span className="text-xs font-semibold text-slate-700">{invoice.clientName}</span>
             </div>
             <p className="text-xs text-slate-500">
-              Total: {formatCurrency(invoice.totalAmount, invoice.currency)} • Due: {invoice.dueDate}
+              {t.formTotalAmount}: {formatAmount(invoice.totalAmount, invoice.currency)} • {t.docDueDate}: {formatDate(invoice.dueDate)}
             </p>
           </div>
         </div>
@@ -135,7 +138,7 @@ export const InvoiceViewModal: React.FC<InvoiceViewModalProps> = ({
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Open
+              {t.statusOpen}
             </button>
             {invoice.downpaymentRequired && (
               <button
@@ -146,7 +149,7 @@ export const InvoiceViewModal: React.FC<InvoiceViewModalProps> = ({
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Downpayment
+                {t.statusDownpayment}
               </button>
             )}
             <button
@@ -157,7 +160,7 @@ export const InvoiceViewModal: React.FC<InvoiceViewModalProps> = ({
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Paid
+              {t.statusPaid}
             </button>
           </div>
 
@@ -166,7 +169,7 @@ export const InvoiceViewModal: React.FC<InvoiceViewModalProps> = ({
             className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 shadow-xs transition"
           >
             <Printer className="w-3.5 h-3.5" />
-            <span>Print</span>
+            <span>{t.viewModalPrint}</span>
           </button>
 
           <button
@@ -176,11 +179,11 @@ export const InvoiceViewModal: React.FC<InvoiceViewModalProps> = ({
           >
             {isExportingPdf ? (
               <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating PDF...
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> {t.viewModalGeneratingPdf}
               </>
             ) : (
               <>
-                <FileDown className="w-3.5 h-3.5" /> Download PDF
+                <FileDown className="w-3.5 h-3.5" /> {t.viewModalDownloadPdf}
               </>
             )}
           </button>
@@ -192,20 +195,21 @@ export const InvoiceViewModal: React.FC<InvoiceViewModalProps> = ({
           >
             {isUploadingToDrive ? (
               <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Backing up to Drive...
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> {t.viewModalBackingUp}
               </>
             ) : (
               <>
-                <Cloud className="w-3.5 h-3.5" /> Sync to Google Drive
+                <Cloud className="w-3.5 h-3.5" /> {t.viewModalSaveToDrive}
               </>
             )}
           </button>
 
           <button
             onClick={onEdit}
-            className="px-3 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition"
+            className="inline-flex items-center gap-1 px-3 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition"
           >
-            Edit
+            <Edit2 className="w-3.5 h-3.5" />
+            <span>{t.edit}</span>
           </button>
         </div>
       </div>

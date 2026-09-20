@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Invoice } from '../types';
-import { formatCurrency } from '../utils/exportUtils';
-import { TrendingUp, Clock, CheckCircle2, AlertCircle, DollarSign, ArrowUpRight } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
+import { TrendingUp, Clock, CheckCircle2, AlertCircle, DollarSign, ArrowUpRight, Plus } from 'lucide-react';
 
 interface DashboardProps {
   invoices: Invoice[];
@@ -14,6 +14,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onSelectInvoice,
   onCreateNew,
 }) => {
+  const { language, t, formatDate, formatAmount } = useLanguage();
+
   // Aggregate Financial Statistics
   const stats = useMemo(() => {
     let totalRevenue = 0; // Total actually collected
@@ -39,10 +41,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const now = new Date();
     const monthlyData: { [key: string]: { monthName: string; revenue: number; invoiced: number; pending: number } } = {};
 
+    const locale = language === 'de' ? 'de-DE' : 'en-US';
+
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const monthName = d.toLocaleString('en-US', { month: 'short' });
+      const monthName = d.toLocaleString(locale, { month: 'short' });
       monthlyData[key] = { monthName, revenue: 0, invoiced: 0, pending: 0 };
     }
 
@@ -76,13 +80,42 @@ export const Dashboard: React.FC<DashboardProps> = ({
       monthsArray,
       maxVal,
     };
-  }, [invoices]);
+  }, [invoices, language]);
 
   const recentInvoices = useMemo(() => {
     return [...invoices]
       .sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime())
       .slice(0, 5);
   }, [invoices]);
+
+  const getStatusBadge = (status: Invoice['status']) => {
+    switch (status) {
+      case 'paid':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800">
+            {t.statusPaid}
+          </span>
+        );
+      case 'downpayment':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sky-100 text-sky-800">
+            {t.statusDownpayment}
+          </span>
+        );
+      case 'draft':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">
+            {t.statusDraft}
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800">
+            {t.statusOpen}
+          </span>
+        );
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -92,14 +125,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Collected Revenue
+              {t.dashCollectedRevenue}
             </span>
             <div className="text-2xl font-black text-slate-900 mt-1 font-mono">
-              {formatCurrency(stats.totalRevenue)}
+              {formatAmount(stats.totalRevenue)}
             </div>
             <div className="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1">
               <TrendingUp className="w-3.5 h-3.5" />
-              <span>{stats.paidCount} fully settled invoices</span>
+              <span>{stats.paidCount} {t.statusPaid.toLowerCase()}</span>
             </div>
           </div>
           <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600 border border-emerald-100">
@@ -111,14 +144,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Pending Receivables
+              {t.dashPendingBalance}
             </span>
             <div className="text-2xl font-black text-slate-900 mt-1 font-mono text-amber-600">
-              {formatCurrency(stats.pendingPayments)}
+              {formatAmount(stats.pendingPayments)}
             </div>
             <div className="text-[11px] text-amber-600 font-medium mt-1 flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
-              <span>{stats.openCount + stats.downpaymentCount} awaiting balance</span>
+              <span>{stats.openCount + stats.downpaymentCount} {t.dashLegendPending.toLowerCase()}</span>
             </div>
           </div>
           <div className="p-3 bg-amber-50 rounded-xl text-amber-600 border border-amber-100">
@@ -130,13 +163,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Total Invoiced
+              {t.dashTotalInvoiced}
             </span>
             <div className="text-2xl font-black text-slate-900 mt-1 font-mono">
-              {formatCurrency(stats.totalInvoiced)}
+              {formatAmount(stats.totalInvoiced)}
             </div>
             <div className="text-[11px] text-slate-500 font-medium mt-1">
-              Across {invoices.length} total invoices
+              {invoices.length} {t.navInvoices}
             </div>
           </div>
           <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600 border border-indigo-100">
@@ -148,13 +181,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Active Downpayments
+              {t.dashDownpaymentCount}
             </span>
             <div className="text-2xl font-black text-slate-900 mt-1 font-mono text-sky-600">
               {stats.downpaymentCount}
             </div>
             <div className="text-[11px] text-sky-600 font-medium mt-1">
-              Deposits collected; balance open
+              {stats.openCount} {t.statusOpen.toLowerCase()}
             </div>
           </div>
           <div className="p-3 bg-sky-50 rounded-xl text-sky-600 border border-sky-100">
@@ -168,21 +201,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
           <div>
             <h3 className="text-base font-bold text-slate-900">
-              Monthly Revenue vs. Pending Payments
+              {t.dashInflowTrends}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Visual cash flow breakdown by issue month for accurate deposit and balance tracking.
+              {t.dashMonthlySubtitle}
             </p>
           </div>
           {/* Legend */}
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-xs bg-emerald-500"></span>
-              <span className="text-slate-600">Collected Revenue</span>
+              <span className="text-slate-600">{t.dashLegendCollected}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-xs bg-amber-400"></span>
-              <span className="text-slate-600">Pending Receivables</span>
+              <span className="text-slate-600">{t.dashLegendPending}</span>
             </div>
           </div>
         </div>
@@ -204,7 +237,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       style={{ height: `${Math.max(4, revPercent)}%` }}
                     >
                       <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] py-0.5 px-1.5 rounded whitespace-nowrap pointer-events-none transition z-10 font-mono">
-                        {formatCurrency(m.revenue)}
+                        {formatAmount(m.revenue)}
                       </div>
                     </div>
 
@@ -214,7 +247,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       style={{ height: `${Math.max(4, penPercent)}%` }}
                     >
                       <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] py-0.5 px-1.5 rounded whitespace-nowrap pointer-events-none transition z-10 font-mono">
-                        {formatCurrency(m.pending)}
+                        {formatAmount(m.pending)}
                       </div>
                     </div>
                   </div>
@@ -227,8 +260,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className="flex justify-between items-center text-xs text-slate-400 mt-2 px-1">
-            <span>Historical 6-Month Timeline</span>
-            <span>Scale Peak: {formatCurrency(stats.maxVal)}</span>
+            <span>{t.dashMonthlySubtitle}</span>
+            <span>Max: {formatAmount(stats.maxVal)}</span>
           </div>
         </div>
       </div>
@@ -236,70 +269,65 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Recent Invoices & Quick Actions */}
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold text-slate-900">Recent Invoices</h3>
+          <h3 className="text-sm font-bold text-slate-900">{t.dashRecentInvoices}</h3>
           <button
             onClick={onCreateNew}
             className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
           >
-            <span>+ Create Invoice</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span>{t.createInvoice}</span>
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-slate-100 text-slate-400 uppercase font-semibold">
-                <th className="py-2.5 px-3">Invoice</th>
-                <th className="py-2.5 px-3">Client</th>
-                <th className="py-2.5 px-3">Issue Date</th>
-                <th className="py-2.5 px-3 text-right">Total</th>
-                <th className="py-2.5 px-3 text-right">Deposit / Paid</th>
-                <th className="py-2.5 px-3 text-center">Status</th>
-                <th className="py-2.5 px-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {recentInvoices.map((inv) => (
-                <tr key={inv.id} className="hover:bg-slate-50/70 transition">
-                  <td className="py-3 px-3 font-mono font-bold text-slate-800">
-                    {inv.invoiceNumber}
-                  </td>
-                  <td className="py-3 px-3 font-medium text-slate-900">{inv.clientName}</td>
-                  <td className="py-3 px-3 text-slate-500">{inv.issueDate}</td>
-                  <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
-                    {formatCurrency(inv.totalAmount, inv.currency)}
-                  </td>
-                  <td className="py-3 px-3 text-right font-mono text-slate-600">
-                    {formatCurrency(inv.amountPaid || 0, inv.currency)}
-                  </td>
-                  <td className="py-3 px-3 text-center">
-                    {inv.status === 'paid' ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800">
-                        Paid
-                      </span>
-                    ) : inv.status === 'downpayment' ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sky-100 text-sky-800">
-                        Downpayment
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800">
-                        Open
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 px-3 text-right">
-                    <button
-                      onClick={() => onSelectInvoice(inv)}
-                      className="text-indigo-600 hover:text-indigo-800 font-semibold inline-flex items-center gap-1"
-                    >
-                      View <ArrowUpRight className="w-3.5 h-3.5" />
-                    </button>
-                  </td>
+        {recentInvoices.length === 0 ? (
+          <div className="py-8 text-center text-slate-400 text-xs">
+            {t.dashNoInvoices}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-100 text-slate-400 uppercase font-semibold">
+                  <th className="py-2.5 px-3">{t.invListColNumber}</th>
+                  <th className="py-2.5 px-3">{t.invListColClient}</th>
+                  <th className="py-2.5 px-3">{t.docDate}</th>
+                  <th className="py-2.5 px-3 text-right">{t.invListColTotal}</th>
+                  <th className="py-2.5 px-3 text-right">{t.docAmountPaid}</th>
+                  <th className="py-2.5 px-3 text-center">{t.invListColStatus}</th>
+                  <th className="py-2.5 px-3 text-right">{t.invListColActions}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {recentInvoices.map((inv) => (
+                  <tr key={inv.id} className="hover:bg-slate-50/70 transition">
+                    <td className="py-3 px-3 font-mono font-bold text-slate-800">
+                      {inv.invoiceNumber}
+                    </td>
+                    <td className="py-3 px-3 font-medium text-slate-900">{inv.clientName}</td>
+                    <td className="py-3 px-3 text-slate-500">{formatDate(inv.issueDate)}</td>
+                    <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
+                      {formatAmount(inv.totalAmount, inv.currency)}
+                    </td>
+                    <td className="py-3 px-3 text-right font-mono text-slate-600">
+                      {formatAmount(inv.amountPaid || 0, inv.currency)}
+                    </td>
+                    <td className="py-3 px-3 text-center">
+                      {getStatusBadge(inv.status)}
+                    </td>
+                    <td className="py-3 px-3 text-right">
+                      <button
+                        onClick={() => onSelectInvoice(inv)}
+                        className="text-indigo-600 hover:text-indigo-800 font-semibold inline-flex items-center gap-1"
+                      >
+                        {t.viewModalTitle} <ArrowUpRight className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -17,7 +17,9 @@ import { InvoiceForm } from './components/InvoiceForm';
 import { InvoiceViewModal } from './components/InvoiceViewModal';
 import { BusinessProfileSettings } from './components/BusinessProfileSettings';
 import { GoogleAuthModal } from './components/GoogleAuthModal';
-import { initAuth, googleSignOut } from './services/firebaseAuth';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { useLanguage } from './i18n/LanguageContext';
+import { initAuth } from './services/firebaseAuth';
 import {
   LayoutDashboard,
   FileText,
@@ -32,6 +34,7 @@ import {
 } from 'lucide-react';
 
 export default function App() {
+  const { t } = useLanguage();
   const [currentTab, setCurrentTab] = useState<'dashboard' | 'invoices' | 'settings'>('dashboard');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [profile, setProfile] = useState<BusinessProfile>(defaultProfile);
@@ -182,12 +185,12 @@ export default function App() {
               </div>
               <div>
                 <div className="text-base font-extrabold tracking-tight text-slate-950 flex items-center gap-2">
-                  <span>InvoiceFlow</span>
+                  <span>{t.appTitle}</span>
                   <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 flex items-center gap-1">
                     <Database className="w-2.5 h-2.5" /> SQLite
                   </span>
                 </div>
-                <div className="text-xs text-slate-400">Small Business Billing & Drive Sync</div>
+                <div className="text-xs text-slate-400">{t.appSubtitle}</div>
               </div>
             </div>
 
@@ -207,7 +210,7 @@ export default function App() {
                 }`}
               >
                 <LayoutDashboard className="w-4 h-4" />
-                <span>Dashboard</span>
+                <span>{t.navDashboard}</span>
               </button>
 
               <button
@@ -224,7 +227,7 @@ export default function App() {
                 }`}
               >
                 <FileText className="w-4 h-4" />
-                <span>Invoices ({invoices.length})</span>
+                <span>{t.navInvoices} ({invoices.length})</span>
               </button>
 
               <button
@@ -241,12 +244,15 @@ export default function App() {
                 }`}
               >
                 <Building2 className="w-4 h-4" />
-                <span>Company & Bank</span>
+                <span>{t.navCompany}</span>
               </button>
             </nav>
 
             {/* Right Quick Actions */}
             <div className="flex items-center gap-2.5">
+              {/* Language Switcher */}
+              <LanguageSwitcher />
+
               {/* Google Drive Status Button */}
               <button
                 onClick={() => setIsAuthModalOpen(true)}
@@ -257,7 +263,9 @@ export default function App() {
                 }`}
               >
                 <Cloud className="w-3.5 h-3.5 text-indigo-600" />
-                <span>{driveUser.isSignedIn ? 'Drive Connected' : 'Google Drive'}</span>
+                <span className="hidden sm:inline">
+                  {driveUser.isSignedIn ? t.driveConnected : t.driveBtn}
+                </span>
                 {driveUser.isSignedIn && <CheckCircle2 className="w-3 h-3 text-emerald-600" />}
               </button>
 
@@ -271,7 +279,7 @@ export default function App() {
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition"
               >
                 <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">Create Invoice</span>
+                <span className="hidden sm:inline">{t.createInvoice}</span>
               </button>
             </div>
           </div>
@@ -290,7 +298,7 @@ export default function App() {
               currentTab === 'dashboard' ? 'bg-white font-bold shadow-xs' : 'text-slate-600'
             }`}
           >
-            Dashboard
+            {t.navDashboard}
           </button>
           <button
             onClick={() => {
@@ -303,7 +311,7 @@ export default function App() {
               currentTab === 'invoices' ? 'bg-white font-bold shadow-xs' : 'text-slate-600'
             }`}
           >
-            Invoices
+            {t.navInvoices}
           </button>
           <button
             onClick={() => {
@@ -316,7 +324,7 @@ export default function App() {
               currentTab === 'settings' ? 'bg-white font-bold shadow-xs' : 'text-slate-600'
             }`}
           >
-            Company & Bank
+            {t.navCompany}
           </button>
         </div>
       </header>
@@ -326,21 +334,21 @@ export default function App() {
         {isLoading ? (
           <div className="py-24 text-center text-slate-400">
             <Database className="w-8 h-8 animate-pulse mx-auto mb-2 text-indigo-500" />
-            <p className="text-xs font-semibold">Loading SQLite database & records...</p>
+            <p className="text-xs font-semibold">{t.dbLoading}</p>
           </div>
         ) : initError ? (
           <div className="py-16 max-w-md mx-auto text-center">
             <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4 border border-amber-200">
               <AlertTriangle className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-slate-800 mb-1">Database Initialization Notice</h3>
+            <h3 className="text-base font-bold text-slate-800 mb-1">{t.dbNoticeTitle}</h3>
             <p className="text-xs text-slate-500 mb-4">{initError}</p>
             <button
               onClick={() => loadData()}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              <span>Retry Initialization</span>
+              <span>{t.dbRetry}</span>
             </button>
           </div>
         ) : isCreatingNew || editingInvoice ? (
