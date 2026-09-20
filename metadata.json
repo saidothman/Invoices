@@ -1,0 +1,6 @@
+{
+  "name": "InvoiceFlow Manager",
+  "description": "Small business invoice management with SQLite local storage, automated PDF/CSV export, deposit/downpayment tracking, customizable templates, and Google Drive cloud backup.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
