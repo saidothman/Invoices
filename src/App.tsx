@@ -17,6 +17,7 @@ import { InvoiceForm } from './components/InvoiceForm';
 import { InvoiceViewModal } from './components/InvoiceViewModal';
 import { BusinessProfileSettings } from './components/BusinessProfileSettings';
 import { GoogleAuthModal } from './components/GoogleAuthModal';
+import { initAuth, googleSignOut } from './services/firebaseAuth';
 import {
   LayoutDashboard,
   FileText,
@@ -73,6 +74,30 @@ export default function App() {
 
   useEffect(() => {
     loadData();
+
+    // Listen for Firebase auth state changes
+    const unsubscribe = initAuth(
+      (user, token) => {
+        setDriveUser({
+          isSignedIn: true,
+          email: user.email || '',
+          name: user.displayName || user.email || 'Google User',
+          picture: user.photoURL || '',
+          accessToken: token,
+        });
+      },
+      () => {
+        setDriveUser({
+          isSignedIn: false,
+          email: '',
+          name: '',
+          picture: '',
+          accessToken: null,
+        });
+      }
+    );
+
+    return () => unsubscribe();
   }, []);
 
   // Save/Create invoice
