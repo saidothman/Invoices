@@ -1,6 +1,6 @@
 import { Invoice, BusinessProfile } from '../types';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 
 /**
  * Exports invoice list to CSV format.
@@ -74,6 +74,7 @@ export async function generateInvoicePdf(
   const canvas = await html2canvas(element, {
     scale: 2,
     useCORS: true,
+    allowTaint: true,
     logging: false,
     backgroundColor: '#ffffff',
   });
@@ -94,19 +95,32 @@ export async function generateInvoicePdf(
   pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
   heightLeft -= pageHeight;
 
-  while (heightLeft >= 0) {
+  // Only add additional pages if there is substantial content remaining (more than 5mm)
+  while (heightLeft > 5) {
     position = heightLeft - imgHeight;
     pdf.addPage();
     pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
     heightLeft -= pageHeight;
   }
 
-  if (downloadDirectly) {
-    pdf.save(`${fileName}.pdf`);
-  }
-
   const blob = pdf.output('blob');
   const base64 = pdf.output('datauristring');
+
+  if (downloadDirectly) {
+    try {
+      pdf.save(`${fileName}.pdf`);
+    } catch {
+      // Fallback for sandboxed or iframe environments
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${fileName}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+    }
+  }
 
   return { blob, base64 };
 }

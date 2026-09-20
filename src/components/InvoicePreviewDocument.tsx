@@ -75,6 +75,7 @@ export const InvoicePreviewDocument: React.FC<InvoicePreviewDocumentProps> = ({
             <img
               src={profile.logoUrl}
               alt={profile.companyName}
+              crossOrigin="anonymous"
               className="h-16 w-auto max-w-[180px] object-contain rounded"
             />
           ) : (

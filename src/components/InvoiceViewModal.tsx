@@ -39,6 +39,7 @@ export const InvoiceViewModal: React.FC<InvoiceViewModalProps> = ({
 }) => {
   const { t, formatDate, formatAmount } = useLanguage();
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const [isUploadingToDrive, setIsUploadingToDrive] = useState(false);
   const [driveSuccessMsg, setDriveSuccessMsg] = useState<string | null>(null);
   const [driveError, setDriveError] = useState<string | null>(null);
@@ -48,13 +49,14 @@ export const InvoiceViewModal: React.FC<InvoiceViewModalProps> = ({
   const handleDownloadPdf = async () => {
     try {
       setIsExportingPdf(true);
+      setPdfError(null);
       await generateInvoicePdf(
         documentElementId,
         `${invoice.invoiceNumber}_${invoice.clientName.replace(/\s+/g, '_')}`
       );
     } catch (err: any) {
       console.error('PDF export failed:', err);
-      alert('Failed to generate PDF. Please try again.');
+      setPdfError(err?.message || 'Failed to generate PDF. You can also use the Print button to save as PDF.');
     } finally {
       setIsExportingPdf(false);
     }
@@ -238,6 +240,32 @@ export const InvoiceViewModal: React.FC<InvoiceViewModalProps> = ({
         <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center gap-2 print:hidden">
           <AlertCircle className="w-4 h-4 text-rose-600" />
           <span>{driveError}</span>
+        </div>
+      )}
+
+      {pdfError && (
+        <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{pdfError}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setPdfError(null);
+                handlePrint();
+              }}
+              className="px-3 py-1 text-xs font-semibold text-rose-800 bg-white border border-rose-300 rounded-lg hover:bg-rose-100 transition shrink-0"
+            >
+              {t.viewModalPrint} (Print to PDF)
+            </button>
+            <button
+              onClick={() => setPdfError(null)}
+              className="text-xs text-rose-500 hover:text-rose-700 px-1"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       )}
 
